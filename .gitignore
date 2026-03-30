@@ -1,2 +1,4 @@
 objs
 dep
+proxy-secret
+proxy-multi.conf
