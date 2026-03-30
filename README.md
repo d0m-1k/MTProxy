@@ -104,6 +104,31 @@ systemctl status MTProxy.service
 systemctl enable MTProxy.service
 ```
 
-## Docker image
-Telegram is also providing [official Docker image](https://hub.docker.com/r/telegrammessenger/proxy/).
-Note: the image is outdated.
+## Docker
+
+This repository provides `Dockerfile` and `docker-compose.yaml` that build the proxy with the `assert` removed to support large PIDs on modern Linux kernels.
+
+### Preparing files
+Before running, create the following files:
+- `secret` – your client secret (generate with `head -c 16 /dev/urandom | xxd -ps`).
+- `proxy-secret` – secret to connect to Telegram servers:  
+  `curl -s https://core.telegram.org/getProxySecret -o proxy-secret`
+- `proxy-multi.conf` – current Telegram configuration:  
+  `curl -s https://core.telegram.org/getProxyConfig -o proxy-multi.conf`
+
+All these files must be placed in the same folder as `docker-compose.yaml`.
+
+### Running
+```bash
+docker-compose up -d --build
+```
+
+The proxy will be available on port `1443` (can be changed in `docker-compose.yaml`).  
+Statistics are available on port `8888` (localhost only).
+
+### Stopping
+```bash
+docker-compose down
+```
+
+> **Note:** the old official image (`telegrammessenger/proxy`) is outdated and does not contain the fix for large PIDs.
