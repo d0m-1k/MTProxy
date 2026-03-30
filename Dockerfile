@@ -20,14 +20,15 @@ RUN make clean && make
 FROM ubuntu:22.04
 
 RUN apt-get update && apt-get install -y \
-    ca-certificates \
+    ca-certificates curl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /src/objs/bin/mtproto-proxy /usr/local/bin/mtproto-proxy
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
-RUN mkdir -p /etc/mtproxy /var/run/mtproxy
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
+    && mkdir -p /var/lib/mtproxy
 
 EXPOSE 1443 8888
 
-ENTRYPOINT ["/usr/local/bin/mtproto-proxy"]
-CMD ["-u", "nobody", "-p", "8888", "-H", "1443", "-S", "/secret", "--aes-pwd", "/proxy-secret", "/proxy-multi.conf", "-M", "1"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

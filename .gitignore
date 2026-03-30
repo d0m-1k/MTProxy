@@ -3,3 +3,5 @@ dep
 proxy-secret
 proxy-multi.conf
 secret
+data/
+.env

@@ -1,21 +1,12 @@
-version: '3.8'
-
 services:
   mtproxy:
     build: .
     container_name: mtproxy
     restart: unless-stopped
+    env_file:
+      - .env
     ports:
-      - "1443:1443"   # MTProto порт
-      - "8888:8888"   # Статистика
+      - "${MT_PORT:-1443}:${MT_PORT:-1443}"           # MTProto
+      - "127.0.0.1:${MT_STATS_PORT:-8888}:${MT_STATS_PORT:-8888}"  # Статистика только localhost
     volumes:
-      - ./secret:/secret:ro
-      - ./proxy-secret:/proxy-secret:ro
-      - ./proxy-multi.conf:/proxy-multi.conf:ro
-    command: >
-      -u nobody
-      -p 8888
-      -H 1443
-      -S $(cat /secret)
-      --aes-pwd /proxy-secret /proxy-multi.conf
-      -M 1
+      - ./data:/var/lib/mtproxy

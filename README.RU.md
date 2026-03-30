@@ -100,31 +100,47 @@ systemctl status MTProxy.service
 systemctl enable MTProxy.service
 ```
 
-### Docker (исправленная версия)
+### Docker (.env + автообновление config)
 
-В этом репозитории предоставлены `Dockerfile` и `docker-compose.yaml`, которые собирают прокси с удалённым `assert` для поддержки больших PID на современных ядрах Linux.
+В этом репозитории `Dockerfile` и `docker-compose.yaml` запускают MTProxy через `.env`.
 
-#### Подготовка файлов
-Перед запуском создайте следующие файлы:
-- `secret` – ваш секрет для клиентов (сгенерируйте командой `head -c 16 /dev/urandom | xxd -ps`).
-- `proxy-secret` – секрет для подключения к серверам Telegram:
-  `curl -s https://core.telegram.org/getProxySecret -o proxy-secret`
-- `proxy-multi.conf` – текущая конфигурация Telegram:
-  `curl -s https://core.telegram.org/getProxyConfig -o proxy-multi.conf`
+#### Подготовка
+1. Создайте `.env` из шаблона:
+```bash
+cp .env.example .env
+```
+2. Укажите `MT_SECRET` (16 байт hex), например:
+```bash
+head -c 16 /dev/urandom | xxd -ps
+```
+3. При необходимости измените порты/интервал обновления:
+- `MT_PORT` — порт для клиентов (по умолчанию `1443`).
+- `MT_STATS_PORT` — локальный порт статистики (по умолчанию `8888`).
+- `MT_CONFIG_UPDATE_INTERVAL` — как часто обновлять `proxy-multi.conf`, в секундах (по умолчанию `86400`, т.е. 24 часа).
 
-Все эти файлы должны находиться в одной папке с `docker-compose.yaml`.
+#### Что контейнер делает при старте
+- Загружает `proxy-secret`, если его нет в `./data/proxy-secret`.
+- Загружает `proxy-multi.conf`, если его нет в `./data/proxy-multi.conf`.
+- Запускает фоновое периодическое обновление `proxy-multi.conf` по `MT_CONFIG_UPDATE_INTERVAL`.
+
+Файлы рантайма сохраняются в `./data`, поэтому после перезапуска контейнера они не теряются.
 
 #### Запуск
 ```bash
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
-Прокси будет доступен на порту `1443` (можно изменить в `docker-compose.yaml`).
-Статистика – на порту `8888` (доступна только локально).
+Прокси будет доступен на порту из `MT_PORT`.
+Статистика доступна только локально на `127.0.0.1:MT_STATS_PORT`.
 
 #### Остановка
 ```bash
-docker-compose down
+docker compose down
 ```
 
-> **Примечание:** старый официальный образ (`telegrammessenger/proxy`) устарел и не содержит исправления для больших PID.---
+#### Принудительно обновить конфиг Telegram
+```bash
+rm -f data/proxy-multi.conf && docker compose restart mtproxy
+```
+
+> **Примечание:** старый официальный образ (`telegrammessenger/proxy`) устарел и не содержит исправления для больших PID.

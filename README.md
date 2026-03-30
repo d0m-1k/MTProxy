@@ -106,31 +106,47 @@ systemctl status MTProxy.service
 systemctl enable MTProxy.service
 ```
 
-## Docker
+## Docker (.env + auto-update config)
 
-This repository provides `Dockerfile` and `docker-compose.yaml` that build the proxy with the `assert` removed to support large PIDs on modern Linux kernels.
+This repository includes `Dockerfile` and `docker-compose.yaml` to run MTProxy via `.env`.
 
-### Preparing files
-Before running, create the following files:
-- `secret` – your client secret (generate with `head -c 16 /dev/urandom | xxd -ps`).
-- `proxy-secret` – secret to connect to Telegram servers:
-  `curl -s https://core.telegram.org/getProxySecret -o proxy-secret`
-- `proxy-multi.conf` – current Telegram configuration:
-  `curl -s https://core.telegram.org/getProxyConfig -o proxy-multi.conf`
-
-All these files must be placed in the same folder as `docker-compose.yaml`.
-
-### Running
+### Prepare
+1. Create `.env` from the template:
 ```bash
-docker-compose up -d --build
+cp .env.example .env
+```
+2. Set `MT_SECRET` (16-byte hex), for example:
+```bash
+head -c 16 /dev/urandom | xxd -ps
+```
+3. Optionally tune ports/update interval:
+- `MT_PORT` — client port (default `1443`).
+- `MT_STATS_PORT` — local stats port (default `8888`).
+- `MT_CONFIG_UPDATE_INTERVAL` — `proxy-multi.conf` refresh interval in seconds (default `86400`, i.e. 24h).
+
+### What the container does on startup
+- Downloads `proxy-secret` if `./data/proxy-secret` does not exist.
+- Downloads `proxy-multi.conf` if `./data/proxy-multi.conf` does not exist.
+- Starts a background periodic refresh of `proxy-multi.conf` using `MT_CONFIG_UPDATE_INTERVAL`.
+
+Runtime files are persisted in `./data`, so they survive restarts.
+
+### Run
+```bash
+docker compose up -d --build
 ```
 
-The proxy will be available on port `1443` (can be changed in `docker-compose.yaml`).
-Statistics are available on port `8888` (localhost only).
+Proxy listens on `MT_PORT`.
+Stats are exposed only on `127.0.0.1:MT_STATS_PORT`.
 
-### Stopping
+### Stop
 ```bash
-docker-compose down
+docker compose down
+```
+
+### Force refresh Telegram config
+```bash
+rm -f data/proxy-multi.conf && docker compose restart mtproxy
 ```
 
 > **Note:** the old official image (`telegrammessenger/proxy`) is outdated and does not contain the fix for large PIDs.
