@@ -1,6 +1,8 @@
 # MTProxy
 Simple MT-Proto proxy
 
+[Русский](https://github.com/d0m-1k/MTProxy/blob/master/README.RU.md) | [English](https://github.com/d0m-1k/MTProxy/blob/master/README.md)
+
 ## Building
 Install dependencies, you would need common set of tools for building from source, and development packages for `openssl` and `zlib`.
 
@@ -111,9 +113,9 @@ This repository provides `Dockerfile` and `docker-compose.yaml` that build the p
 ### Preparing files
 Before running, create the following files:
 - `secret` – your client secret (generate with `head -c 16 /dev/urandom | xxd -ps`).
-- `proxy-secret` – secret to connect to Telegram servers:  
+- `proxy-secret` – secret to connect to Telegram servers:
   `curl -s https://core.telegram.org/getProxySecret -o proxy-secret`
-- `proxy-multi.conf` – current Telegram configuration:  
+- `proxy-multi.conf` – current Telegram configuration:
   `curl -s https://core.telegram.org/getProxyConfig -o proxy-multi.conf`
 
 All these files must be placed in the same folder as `docker-compose.yaml`.
@@ -123,7 +125,7 @@ All these files must be placed in the same folder as `docker-compose.yaml`.
 docker-compose up -d --build
 ```
 
-The proxy will be available on port `1443` (can be changed in `docker-compose.yaml`).  
+The proxy will be available on port `1443` (can be changed in `docker-compose.yaml`).
 Statistics are available on port `8888` (localhost only).
 
 ### Stopping
